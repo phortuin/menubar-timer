@@ -4,48 +4,49 @@ from enum import Enum
 import rumps
 rumps.debug_mode(True)
 
-class TimerType(Enum):
-    BREAK = 1
-    WORK = 2
-    UNTIL = 3
-    EVAL = 4
-
-
+# Icon font:
+# https://fonts.google.com/icons?selected=Material%20Icons%3Atimer
 config = {
     'app_name': "MenubarTimer",
-    'app_icon': 'menubar-icon.png',  # https://fonts.google.com/icons?selected=Material%20Icons%3Atimer
-    'button_break': "Start 5 min break",
-    'button_work': "Start 25 min work",
-    'button_eval': "Start eval talk",
+    'app_icon': 'menubar-icon.png',
     'button_until': "Start timer until ",
     'button_add_five': "Add 5 mins to timer",
     'button_stop': "Stop & clear timer",
     'button_stop_icon': 'timer-off.png',
     'setting_notifications': "Allow notifications",
     'setting_sound': "Allow sound",
-    'notifications': {
-        TimerType.BREAK: "Back to work you fucking slacker",
-        TimerType.WORK: "Slow it down motherfucker",
-        TimerType.EVAL: "Wrap it up!",
-        TimerType.UNTIL: "Yep it’s that fucking late already"
-    },
-    'duration_break': 300, # 5 minutes
-    'duration_work': 1500, # 25 minutes
-    'duration_eval': 2700  # 45 minutes
+    'notification_until': "Yep, it’s that fucking late already",
 }
+
+
+basic_timer_config = [
+    {
+        'title': "Start 5 min break",
+        'duration': 300,  # 5 minutes
+        'notification': "Back to work you fucking slacker",
+    },
+    {
+        'title': "Start 25 min work",
+        'duration': 1500,  # 25 minutes
+        'notification': "Slow it down motherfucker",
+    },
+    {
+        'title': "Start eval talk",
+        'duration': 2700,  # 45 minutes
+        'notification': "Wrap it up!",
+    }
+]
 
 
 def get_next_hour():
     return datetime.now().replace(second=0, minute=0) - timedelta(hours=-1)
 
-
 # refactor:
 # 1. run_timer krijgt type of timer mee en duration
-# 2. decorator voor break en work, want je kan de type of timer en duration als
-# properties meegeven aan de menuitems? self.button_break.timer_type = ...etc
-# 3. timer.count en end is allemaal zelf bedacht door de auteur van dat artikel.
+# 3. timer.count en end is allemaal zelf bedacht door de auteur van dat artikel
 # een timer is niks anders dan een ticker. je kan ook self.end en self.count
 # doen of whatever waar je zin in hebt
+
 
 class MenubarTimerApp():
     def __init__(self):
@@ -54,7 +55,7 @@ class MenubarTimerApp():
             icon=config['app_icon'],
             template=True  # Automagic support for light & dark mode
         )
-        self.type_of_timer = None
+        self.buttons_basic_timers = []
         self.timer = rumps.Timer(
             callback=self.on_tick,
             interval=1
@@ -67,15 +68,13 @@ class MenubarTimerApp():
         self.init_menu()
 
     def init_menu(self):
-        self.button_break = rumps.MenuItem(
-            title=config['button_break']
-        )
-        self.button_work = rumps.MenuItem(
-            title=config['button_work']
-        )
-        self.button_eval = rumps.MenuItem(
-            title=config['button_eval']
-        )
+        for basic_timer in basic_timer_config:
+            menu_item = rumps.MenuItem(
+                title=basic_timer['title']
+            )
+            menu_item.duration = basic_timer['duration']
+            menu_item.notification = basic_timer['notification']
+            self.buttons_basic_timers.append(menu_item)
         self.button_until = rumps.MenuItem(
             title=config['button_until']
         )
@@ -96,9 +95,7 @@ class MenubarTimerApp():
             title=config['button_stop']
         )
         self.app.menu = [
-            self.button_break,
-            self.button_work,
-            self.button_eval,
+            *self.buttons_basic_timers,
             self.button_until,
             self.button_add_five,
             None,
@@ -112,9 +109,8 @@ class MenubarTimerApp():
 
     def reset_menu(self):
         self.set_until_button()
-        self.button_break.set_callback(self.handle_button_break)
-        self.button_work.set_callback(self.handle_button_work)
-        self.button_eval.set_callback(self.handle_button_eval)
+        for button in self.buttons_basic_timers:
+            button.set_callback(self.handle_basic_timers)
         self.button_until.set_callback(self.handle_button_until)
         self.button_add_five.set_callback(None)
         self.button_stop.set_callback(None)
@@ -125,29 +121,20 @@ class MenubarTimerApp():
         self.button_until.title = config['button_until'] + \
             get_next_hour().strftime('%H:%M')
 
-    def handle_button_break(self, sender):
-        self.type_of_timer = TimerType.BREAK
-        self.run_timer(config['duration_break'])
-
-    def handle_button_work(self, sender):
-        self.type_of_timer = TimerType.WORK
-        self.run_timer(config['duration_work'])
-
-    def handle_button_eval(self, sender):
-        self.type_of_timer = TimerType.EVAL
-        self.run_timer(config['duration_eval'])
+    def handle_basic_timers(self, sender):
+        self.notification = sender.notification
+        self.run_timer(sender.duration)
 
     def handle_button_until(self, sender):
-        self.type_of_timer = TimerType.UNTIL
+        self.notification = config['notification_until']
         seconds_until_next_hour = (
             get_next_hour() - datetime.now()
         ).total_seconds()
         self.run_timer(seconds_until_next_hour)
 
     def run_timer(self, duration):
-        self.button_break.set_callback(None)
-        self.button_work.set_callback(None)
-        self.button_eval.set_callback(None)
+        for button in self.buttons_basic_timers:
+            button.set_callback(None)
         self.button_until.set_callback(None)
         self.button_add_five.set_callback(self.handle_button_add_five)
         self.button_stop.set_callback(self.handle_button_stop)
@@ -159,7 +146,7 @@ class MenubarTimerApp():
         self.timer.start()
 
     def handle_button_add_five(self, sender):
-        self.timer.end = self.timer.end + config['duration_break']
+        self.timer.end = self.timer.end + 300  # 5 minutes
 
     def update_setting_notifications(self, sender):
         sender.state = not sender.state
@@ -168,7 +155,7 @@ class MenubarTimerApp():
             if self.setting_sound.state == 1:
                 self.setting_sound.state = -1
         if sender.state == 1:
-            self.setting_sound.set_callback(self.set_sound)
+            self.setting_sound.set_callback(self.update_setting_sound)
             if (self.setting_sound.state == -1):
                 self.setting_sound.state = 1
 
@@ -189,7 +176,7 @@ class MenubarTimerApp():
             if self.setting_notifications.state:
                 rumps.notification(
                     "Time’s up",
-                    subtitle=config["notifications"][self.type_of_timer],
+                    subtitle=self.notification,
                     message='',
                     sound=bool(self.setting_sound.state)
                 )
