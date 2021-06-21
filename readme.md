@@ -18,3 +18,8 @@ $ python3 menubar-timer.py
 ```bash
 $ python3 setup.py py2app
 ```
+
+## Todo
+
+- [ ] Make actual `.icns` file so that menubar icon will look good in notification
+- [ ] Turn sound back on after Eval Talk timer is finished/gets stopped
