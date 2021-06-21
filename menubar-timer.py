@@ -41,12 +41,6 @@ basic_timer_config = [
 def get_next_hour():
     return datetime.now().replace(second=0, minute=0) - timedelta(hours=-1)
 
-# refactor:
-# 1. run_timer krijgt type of timer mee en duration
-# 3. timer.count en end is allemaal zelf bedacht door de auteur van dat artikel
-# een timer is niks anders dan een ticker. je kan ook self.end en self.count
-# doen of whatever waar je zin in hebt
-
 
 class MenubarTimerApp():
     def __init__(self):
@@ -123,30 +117,29 @@ class MenubarTimerApp():
 
     def handle_basic_timers(self, sender):
         self.notification = sender.notification
-        self.run_timer(sender.duration)
+        self.start_timer(sender.duration)
 
-    def handle_button_until(self, sender):
+    def handle_button_until(self, _):
         self.notification = config['notification_until']
         seconds_until_next_hour = (
             get_next_hour() - datetime.now()
         ).total_seconds()
-        self.run_timer(seconds_until_next_hour)
+        self.start_timer(seconds_until_next_hour)
 
-    def run_timer(self, duration):
+    def start_timer(self, duration):
         for button in self.buttons_basic_timers:
             button.set_callback(None)
         self.button_until.set_callback(None)
         self.button_add_five.set_callback(self.handle_button_add_five)
         self.button_stop.set_callback(self.handle_button_stop)
-        self.timer.count = 0
-        self.timer.end = int(duration)
-        # Prevent displaying app name; a timer will appear after the next tick
         self.app.title = ' '
         self.app.icon = None
+        self.timer.ticks = 0
+        self.timer.duration = int(duration)
         self.timer.start()
 
-    def handle_button_add_five(self, sender):
-        self.timer.end = self.timer.end + 300  # 5 minutes
+    def handle_button_add_five(self, _):
+        self.timer.duration += 300  # 5 minutes
 
     def update_setting_notifications(self, sender):
         sender.state = not sender.state
@@ -162,16 +155,15 @@ class MenubarTimerApp():
     def update_setting_sound(self, sender):
         sender.state = not sender.state
 
-    def handle_button_stop(self, sender):
+    def handle_button_stop(self, _):
         self.stop_timer()
 
     def stop_timer(self):
         self.timer.stop()
-        self.timer.count = 0
         self.reset_menu()
 
     def on_tick(self, sender):
-        time_left = sender.end - sender.count
+        time_left = sender.duration - sender.ticks
         if time_left <= 0:
             if self.setting_notifications.state:
                 rumps.notification(
@@ -183,9 +175,9 @@ class MenubarTimerApp():
             self.stop_timer()
         else:
             self.app.title = self.get_pretty_time(time_left)
-        sender.count += 1
+        sender.ticks += 1
 
-    def on_update_tick(self, sender):
+    def on_update_tick(self, _):
         if not self.timer.is_alive():
             self.set_until_button()
 
