@@ -2,6 +2,15 @@
 
 > Small timer app that lives in menubar
 
+![](screenshot.png)
+
+- Counts down from 5, 25, or 45 minutes
+- Counts down until the next whole hour
+- Add extra 5 minutes to timer when running
+- Optionally displays OS notification with/without sound after countdown is done
+- When running, shows only the countdown (like `13:03`) and no icon
+- Works with dark/light color scheme
+
 ## Setup
 
 This is a Python3 app built with [Rumps](https://rumps.readthedocs.io/en/latest/index.html).
