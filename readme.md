@@ -11,6 +11,8 @@
 - When running, shows only the countdown (like `13:03`) and no icon
 - Works with dark/light color scheme
 
+Hat tip to [Camillo Visini](https://github.com/visini) for [this blog post](https://camillovisini.com/article/create-macos-menu-bar-app-pomodoro/) that I based my app on.
+
 ## Setup
 
 This is a Python3 app built with [Rumps](https://rumps.readthedocs.io/en/latest/index.html).
