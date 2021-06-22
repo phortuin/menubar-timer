@@ -23,3 +23,7 @@ $ python3 setup.py py2app
 
 - [ ] Make actual `.icns` file so that menubar icon will look good in notification
 - [ ] Turn sound back on after Eval Talk timer is finished/gets stopped
+
+Notes:
+
+- Can’t be built w/ Github Actions because the `pyobjc` framework needed for Rumps is MacOS only and Github Actions builds on Linux. Building from source could work -> https://github.com/ronaldoussoren/pyobjc Good luck!
