@@ -34,3 +34,8 @@ jobs:
     - name: Build with py2app
       run: |
         python ./setup.py py2app
+    - name: Package and release
+      run: |
+        cd dist
+        zip -r MenubarTimer.app.zip *
+
