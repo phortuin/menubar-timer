@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from enum import Enum
 
 import rumps
 rumps.debug_mode(True)
