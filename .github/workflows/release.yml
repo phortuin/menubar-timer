@@ -40,8 +40,8 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: dist/MenubarTimer.app.zip
+      with:
+        files: dist/MenubarTimer.app.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
