@@ -11,7 +11,6 @@ config = {
     'button_until': "Start timer until ",
     'button_add_five': "Add 5 mins to timer",
     'button_stop': "Stop & clear timer",
-    'button_stop_icon': 'timer-off.png',
     'setting_notifications': "Allow notifications",
     'setting_sound': "Allow sound",
     'notification_until': "Yep, it’s that fucking late already",
@@ -37,8 +36,11 @@ basic_timer_config = [
 ]
 
 
-def get_next_hour():
-    return datetime.now().replace(second=0, minute=0) - timedelta(hours=-1)
+def get_next_until():
+    now = datetime.now()
+    uur = now.replace(second=0, minute=0) - timedelta(hours=-1)
+    halfuur = now.replace(second=0, minute=30)
+    return uur if now > halfuur else halfuur
 
 
 class MenubarTimerApp():
@@ -112,7 +114,7 @@ class MenubarTimerApp():
 
     def set_until_button(self):
         self.button_until.title = config['button_until'] + \
-            get_next_hour().strftime('%H:%M')
+            get_next_until().strftime('%H:%M')
 
     def handle_basic_timers(self, sender):
         self.notification = sender.notification
@@ -121,7 +123,7 @@ class MenubarTimerApp():
     def handle_button_until(self, _):
         self.notification = config['notification_until']
         seconds_until_next_hour = (
-            get_next_hour() - datetime.now()
+            get_next_until() - datetime.now()
         ).total_seconds()
         self.start_timer(seconds_until_next_hour)
 
