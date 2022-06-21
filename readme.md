@@ -34,6 +34,8 @@ $ python3 setup.py py2app
 
 - [ ] Make actual `.icns` file so that menubar icon will look good in notification
 - [ ] Turn sound back on after Eval Talk timer is finished/gets stopped
+- [ ] Get version info in app file
+- [ ] Find a way to build properly on ARM architecture. Workaround to get running on M1/2 is downloading .app file from GitHub, which builds for Intel architecture, and runs via Rosetta
 
 ## License
 
