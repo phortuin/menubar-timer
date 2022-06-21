@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import rumps
 rumps.debug_mode(True)
@@ -38,8 +38,8 @@ basic_timer_config = [
 
 def get_next_until():
     now = datetime.now()
-    uur = now.replace(second=0, minute=0) - timedelta(hours=-1)
-    halfuur = now.replace(second=0, minute=30)
+    uur = now.replace(second=0, minute=59)
+    halfuur = now.replace(second=0, minute=29)
     return uur if now > halfuur else halfuur
 
 
