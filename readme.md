@@ -44,6 +44,7 @@ Run the tests with `xcodebuild test -scheme MenubarTimer -destination 'platform=
 - [ ] Pause and resume
 - [ ] A duration you type in yourself
 - [ ] A simpler, more iconic app icon
+- [ ] A readme screenshot of the menu over a plain desktop
 
 ## License
 
