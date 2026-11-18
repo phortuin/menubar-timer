@@ -1,61 +1,46 @@
 import UserNotifications
 
-enum Setting {
-    static let notifications = "allowNotifications"
-    static let sound = "allowSound"
-}
-
 /// Hands the time's-up notification to macOS when a timer starts, so it comes
-/// on time whatever the app is doing, and passes on the buttons pressed on it.
+/// on time whatever the app is doing, and passes on its +5 min button.
 @MainActor
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
-    enum Button {
-        case addFive(message: String)
-        case start(Preset)
-    }
-
-    var onButton: (Button) -> Void = { _ in }
+    /// Called with the message of the time's up whose +5 min was pressed.
+    var onAddFive: (String) -> Void = { _ in }
 
     private let center = UNUserNotificationCenter.current()
     /// The identifier of the notification scheduled for the running timer.
     private var scheduled: String?
-    private static let timesUp = "timesUp"
-    private static let addFive = "addFive"
+    nonisolated private static let timesUp = "timesUp"
+    nonisolated private static let addFive = "addFive"
 
     override init() {
         super.init()
-        UserDefaults.standard.register(defaults: [Setting.notifications: true, Setting.sound: true])
         center.delegate = self
-        // Each notification has one button: start the preset offered next,
-        // in a category named after that preset, or else +5 min.
+        // A starting app has no timer, so a time's up still scheduled is left
+        // from an app that was killed (a crash or Force Quit) before it could
+        // cancel it, and would otherwise arrive without a timer.
+        center.removeAllPendingNotificationRequests()
         let addFive = UNNotificationAction(identifier: Self.addFive, title: "+5 min")
-        var categories: Set = [UNNotificationCategory(identifier: Self.timesUp, actions: [addFive], intentIdentifiers: [])]
-        for preset in Preset.all.compactMap({ Preset.with(id: $0.next) }) {
-            let start = UNNotificationAction(identifier: preset.id, title: preset.title)
-            categories.insert(UNNotificationCategory(identifier: preset.id, actions: [start], intentIdentifiers: []))
-        }
-        center.setNotificationCategories(categories)
+        center.setNotificationCategories([
+            UNNotificationCategory(identifier: Self.timesUp, actions: [addFive], intentIdentifiers: []),
+        ])
     }
 
     func requestPermission() {
-        guard UserDefaults.standard.bool(forKey: Setting.notifications) else { return }
         center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
     /// Schedules "Time’s up" with the timer's message at `end`, replacing the
-    /// one scheduled before, or cancels it when notifications are off.
-    func schedule(at end: Date, message: String, next: Preset?) {
+    /// one scheduled before.
+    func schedule(at end: Date, message: String) {
         cancel()
-        let defaults = UserDefaults.standard
-        guard defaults.bool(forKey: Setting.notifications), end > .now else { return }
+        guard end > .now else { return }
         let content = UNMutableNotificationContent()
         content.title = "Time’s up"
         content.subtitle = message
-        content.categoryIdentifier = next?.id ?? Self.timesUp
-        if defaults.bool(forKey: Setting.sound) {
-            // A built-in sound from /System/Library/Sounds, found by its name.
-            content.sound = UNNotificationSound(named: UNNotificationSoundName("Funk.aiff"))
-        }
+        content.categoryIdentifier = Self.timesUp
+        // A built-in sound from /System/Library/Sounds, found by its name.
+        content.sound = UNNotificationSound(named: UNNotificationSoundName("Funk.aiff"))
         // At the end time itself, like the countdown, so a Mac that sleeps
         // in between doesn't delay it.
         let when = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: end)
@@ -83,16 +68,11 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
                                             didReceive response: UNNotificationResponse) async {
-        let action = response.actionIdentifier
-        let content = response.notification.request.content
-        await press(action, message: content.subtitle)
+        guard response.actionIdentifier == Self.addFive else { return }
+        await pressAddFive(response.notification.request.content.subtitle)
     }
 
-    private func press(_ action: String, message: String) {
-        if action == Self.addFive {
-            onButton(.addFive(message: message))
-        } else if let preset = Preset.with(id: action) {
-            onButton(.start(preset))
-        }
+    private func pressAddFive(_ message: String) {
+        onAddFive(message)
     }
 }

@@ -4,13 +4,12 @@
 
 ![](screenshot.png)
 
-- Counts down from 5, 25, or 45 minutes
-- Counts down until the next :29 or :59
+- Counts down a 5 min break, or a 30 or 60 min meeting
+- Counts down until the next :29 or :59, a minute before the half or full hour
 - Add extra 5 minutes to timer when running
-- Optionally displays OS notification with/without sound (Funk) after countdown is done
-- The notification has one button: start a 5 min break after work, 25 min work after a break, or add 5 minutes after the others
 - Shows when the running timer ends in the menu
-- When running, shows only the countdown (like `13:03`) and no icon
+- Notifies you when time is up, with the Funk sound and a +5 min button
+- When running, shows the time left and a progress bar instead of the icon
 - Works with dark/light color scheme
 
 Hat tip to [Camillo Visini](https://github.com/visini) for [this blog post](https://camillovisini.com/article/create-macos-menu-bar-app-pomodoro/) that the first, Python version was based on.
@@ -38,13 +37,8 @@ Run the tests with `xcodebuild test -scheme MenubarTimer -destination 'platform=
 
 ## Todo
 
-- [ ] Sound can be turned off during an eval talk, and the setting goes back to what it was once that timer is done
-- [ ] A pie in the menu bar instead of, or next to, the countdown
-- [ ] Focus (Do Not Disturb) during an eval talk, through a Shortcut
-- [ ] Pause and resume
-- [ ] A duration you type in yourself
 - [ ] A simpler, more iconic app icon
-- [ ] A readme screenshot of the menu over a plain desktop
+- [ ] A readme screenshot of the current menu and progress bar, over a plain desktop
 
 ## License
 

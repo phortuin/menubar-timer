@@ -29,9 +29,17 @@ struct TimingTests {
         #expect(nextUntil(after: time(12, 59, 30), calendar: calendar) == time(13, 29))
     }
 
+    @Test func aFiveMinuteTimerStartsAtFiveMinutesAndFull() {
+        let now = Date(timeIntervalSinceReferenceDate: 1000.4)
+        let span = timerSpan(from: now, to: now.addingTimeInterval(5 * 60))
+        let left = secondsLeft(until: span.end, at: now)
+        #expect(left == 300)
+        #expect(shareLeft(left, of: span) == 1)
+    }
+
     @Test func countdownFormat() {
         #expect(formatCountdown(45 * 60) == "45:00")
-        #expect(formatCountdown(9 * 60 + 5) == "\u{2007}9:05")
-        #expect(formatCountdown(59) == "\u{2007}0:59")
+        #expect(formatCountdown(9 * 60 + 5) == "9:05")
+        #expect(formatCountdown(59) == "0:59")
     }
 }

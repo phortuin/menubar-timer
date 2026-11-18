@@ -8,12 +8,19 @@ final class Countdown {
     private(set) var end: Date?
     private(set) var remaining = 0
     private(set) var until = nextUntil(after: .now)
+    @ObservationIgnored private var began = Date.now
     @ObservationIgnored private var message = ""
-    @ObservationIgnored private var next: Preset?
     @ObservationIgnored private let notifier = Notifier()
     @ObservationIgnored private var ticker: Timer!
 
     var isRunning: Bool { end != nil }
+
+    /// The share of the running timer's length still left, from 1 to 0. Add
+    /// five makes the timer longer, so the share grows with it.
+    var shareLeft: Double {
+        guard let end else { return 0 }
+        return MenubarTimer.shareLeft(remaining, of: DateInterval(start: began, end: end))
+    }
 
     init() {
         ticker = Timer(fire: until, interval: 1, repeats: true) { [weak self] _ in
@@ -31,34 +38,29 @@ final class Countdown {
             MainActor.assumeIsolated { self?.notifier.cancel() }
         }
         notifier.requestPermission()
-        notifier.onButton = { [weak self] button in
-            // As in the menu, a timer can only start while none runs, so a
+        notifier.onAddFive = { [weak self] message in
+            // As in the menu, a timer can only start while none runs, so the
             // button on an earlier time's up can't replace the running timer.
             guard let self, !self.isRunning else { return }
-            switch button {
-            case .addFive(let message):
-                start(seconds: 5 * 60, message: message, next: nil)
-            case .start(let preset):
-                start(preset)
-            }
+            start(seconds: 5 * 60, message: message)
         }
     }
 
     func start(_ preset: Preset) {
-        start(seconds: preset.seconds, message: preset.message, next: Preset.with(id: preset.next))
+        start(seconds: preset.seconds, message: preset.message)
     }
 
-    func start(seconds: Int, message: String, next: Preset?) {
-        start(until: .now.addingTimeInterval(TimeInterval(seconds)), message: message, next: next)
+    func start(seconds: Int, message: String) {
+        start(until: .now.addingTimeInterval(TimeInterval(seconds)), message: message)
     }
 
-    func start(until end: Date, message: String, next: Preset?) {
-        // On a whole second, because macOS shows the time's up to the second.
-        let end = Date(timeIntervalSinceReferenceDate: end.timeIntervalSinceReferenceDate.rounded(.up))
+    func start(until end: Date, message: String) {
+        let span = timerSpan(from: .now, to: end)
+        let end = span.end
+        began = span.start
         self.end = end
         self.message = message
-        self.next = next
-        notifier.schedule(at: end, message: message, next: next)
+        notifier.schedule(at: end, message: message)
         // Ticks on the whole seconds before the end, so the countdown changes
         // and the timer finishes on time rather than up to a second late.
         let left = end.timeIntervalSinceNow
@@ -70,20 +72,13 @@ final class Countdown {
         guard let end else { return }
         let later = end.addingTimeInterval(5 * 60)
         self.end = later
-        notifier.schedule(at: later, message: message, next: next)
+        notifier.schedule(at: later, message: message)
         tick()
     }
 
-    func stop() {
+    func clear() {
         notifier.cancel()
         reset()
-    }
-
-    func settingsChanged() {
-        notifier.requestPermission()
-        if let end {
-            notifier.schedule(at: end, message: message, next: next)
-        }
     }
 
     private func reset() {
@@ -100,7 +95,7 @@ final class Countdown {
             ticker.fireDate = until
             return
         }
-        let left = Int(end.timeIntervalSince(now).rounded(.up))
+        let left = secondsLeft(until: end, at: now)
         if left <= 0 {
             // macOS shows the time's-up notification by itself at the end.
             reset()
