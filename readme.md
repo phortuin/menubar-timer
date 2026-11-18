@@ -37,7 +37,6 @@ Run the tests with `xcodebuild test -scheme MenubarTimer -destination 'platform=
 
 ## Todo
 
-- [ ] A simpler, more iconic app icon
 - [ ] A readme screenshot of the current menu and progress bar, over a plain desktop
 
 ## License

@@ -1,31 +1,20 @@
 // Renders the app icon: `swift design/icon.swift` from the repo root.
-// A white clock face with a blue wedge for the time left (25 of 60 minutes)
-// and twelve hour ticks, on Apple's Mac template: an 824 pt rounded tile on a
-// 1024 canvas with a soft shadow, in a blue gradient from top to bottom.
+// A white stopwatch (ring, crown, side button and one hand at 12) on Apple's
+// Mac template: an 824 pt rounded tile on a 1024 canvas with a soft shadow,
+// in a blue gradient from top to bottom.
 import SwiftUI
 import AppKit
 
 let tile: CGFloat = 824
-let face = tile * 0.68
-
-struct Wedge: Shape {
-    var share: Double
-
-    func path(in rect: CGRect) -> Path {
-        let center = CGPoint(x: rect.midX, y: rect.midY)
-        var path = Path()
-        path.move(to: center)
-        path.addArc(center: center, radius: rect.width / 2, startAngle: .degrees(-90),
-                    endAngle: .degrees(-90 + 360 * share), clockwise: false)
-        path.closeSubpath()
-        return path
-    }
-}
 
 struct Icon: View {
-    let ink = Color(white: 0.15)
-
     var body: some View {
+        // Sizes as shares of the tile, so the drawing scales with it.
+        let ring = tile * 0.54
+        let stroke = tile * 0.065
+        // The watch's middle sits a little below the tile's, to leave room
+        // for the crown above it.
+        let drop = tile * 0.05
         ZStack {
             Color.clear
             RoundedRectangle(cornerRadius: tile * 0.225, style: .continuous)
@@ -35,17 +24,27 @@ struct Icon: View {
                     startPoint: .top, endPoint: .bottom))
                 .frame(width: tile, height: tile)
                 .shadow(color: .black.opacity(0.25), radius: 12, y: 8)
-            Circle().fill(.white).frame(width: face, height: face)
-            Wedge(share: 25.0 / 60)
-                .fill(Color(red: 0.05, green: 0.45, blue: 1))
-                .frame(width: face * 0.8, height: face * 0.8)
-            ForEach(0..<12) { hour in
-                Capsule().fill(ink)
-                    .frame(width: face * 0.022, height: face * (hour % 3 == 0 ? 0.075 : 0.045))
-                    .offset(y: -face * 0.43)
-                    .rotationEffect(.degrees(Double(hour) * 30))
+            ZStack {
+                Circle().stroke(.white, lineWidth: stroke).frame(width: ring, height: ring)
+                // Crown: a stem and a cap above 12 o'clock.
+                Rectangle().fill(.white)
+                    .frame(width: stroke, height: tile * 0.06)
+                    .offset(y: -(ring / 2 + tile * 0.03))
+                RoundedRectangle(cornerRadius: stroke / 3).fill(.white)
+                    .frame(width: tile * 0.16, height: stroke)
+                    .offset(y: -(ring / 2 + tile * 0.06 + stroke / 2))
+                // Side button at half past one.
+                RoundedRectangle(cornerRadius: stroke / 3).fill(.white)
+                    .frame(width: stroke, height: tile * 0.08)
+                    .offset(y: -(ring / 2 + tile * 0.05))
+                    .rotationEffect(.degrees(45))
+                // One hand, from the middle to 12.
+                Capsule().fill(.white)
+                    .frame(width: stroke, height: ring * 0.3)
+                    .offset(y: -ring * 0.15)
+                Circle().fill(.white).frame(width: stroke * 1.6)
             }
-            Circle().fill(ink).frame(width: face * 0.07)
+            .offset(y: drop)
         }
         .frame(width: 1024, height: 1024)
     }
