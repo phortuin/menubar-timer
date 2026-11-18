@@ -19,7 +19,12 @@ on rumps; that version lives in the git history.
 - **Notification setting** / **sound setting**: Allow notifications, Allow
   sound. The sound setting is disabled while notifications are off.
 - **Time's up**: the notification at the end of a timer, with the timer's
-  text as subtitle.
+  text as subtitle and the Funk sound. It is handed to macOS when the timer
+  starts, so it comes on time whatever the app is doing.
+- **Notification button**: the one button on time's up. Start 5 min break
+  after 25 min work, Start 25 min work after 5 min break, +5 min after the
+  others (a new 5-minute timer with the same text).
+- **End time**: "Ends at HH:MM" in the menu while a timer runs.
 
 ## Code
 

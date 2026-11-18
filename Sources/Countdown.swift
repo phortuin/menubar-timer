@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Observation
 
 /// The one running timer, counting down to an end time, and the end the until
@@ -9,6 +9,8 @@ final class Countdown {
     private(set) var remaining = 0
     private(set) var until = nextUntil(after: .now)
     @ObservationIgnored private var message = ""
+    @ObservationIgnored private var next: Preset?
+    @ObservationIgnored private let notifier = Notifier()
     @ObservationIgnored private var ticker: Timer!
 
     var isRunning: Bool { end != nil }
@@ -24,16 +26,39 @@ final class Countdown {
         NotificationCenter.default.addObserver(forName: .NSSystemTimeZoneDidChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.until = nextUntil(after: .now) }
         }
+        // A time's up scheduled with macOS would still come after the app quit.
+        NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.notifier.cancel() }
+        }
+        notifier.requestPermission()
+        notifier.onButton = { [weak self] button in
+            // As in the menu, a timer can only start while none runs, so a
+            // button on an earlier time's up can't replace the running timer.
+            guard let self, !self.isRunning else { return }
+            switch button {
+            case .addFive(let message):
+                start(seconds: 5 * 60, message: message, next: nil)
+            case .start(let preset):
+                start(preset)
+            }
+        }
     }
 
-    func start(seconds: Int, message: String) {
-        start(until: .now.addingTimeInterval(TimeInterval(seconds)), message: message)
+    func start(_ preset: Preset) {
+        start(seconds: preset.seconds, message: preset.message, next: Preset.with(id: preset.next))
     }
 
-    func start(until end: Date, message: String) {
-        Notifier.requestPermission()
+    func start(seconds: Int, message: String, next: Preset?) {
+        start(until: .now.addingTimeInterval(TimeInterval(seconds)), message: message, next: next)
+    }
+
+    func start(until end: Date, message: String, next: Preset?) {
+        // On a whole second, because macOS shows the time's up to the second.
+        let end = Date(timeIntervalSinceReferenceDate: end.timeIntervalSinceReferenceDate.rounded(.up))
         self.end = end
         self.message = message
+        self.next = next
+        notifier.schedule(at: end, message: message, next: next)
         // Ticks on the whole seconds before the end, so the countdown changes
         // and the timer finishes on time rather than up to a second late.
         let left = end.timeIntervalSinceNow
@@ -42,11 +67,26 @@ final class Countdown {
     }
 
     func addFive() {
-        end = end?.addingTimeInterval(5 * 60)
+        guard let end else { return }
+        let later = end.addingTimeInterval(5 * 60)
+        self.end = later
+        notifier.schedule(at: later, message: message, next: next)
         tick()
     }
 
     func stop() {
+        notifier.cancel()
+        reset()
+    }
+
+    func settingsChanged() {
+        notifier.requestPermission()
+        if let end {
+            notifier.schedule(at: end, message: message, next: next)
+        }
+    }
+
+    private func reset() {
         end = nil
         // With no timer running, the only change to show is the until time.
         ticker.fireDate = until
@@ -54,16 +94,16 @@ final class Countdown {
 
     private func tick() {
         let now = Date.now
-        let next = nextUntil(after: now)
-        if next != until { until = next }
+        let latest = nextUntil(after: now)
+        if latest != until { until = latest }
         guard let end else {
             ticker.fireDate = until
             return
         }
         let left = Int(end.timeIntervalSince(now).rounded(.up))
         if left <= 0 {
-            Notifier.timeIsUp(message)
-            stop()
+            // macOS shows the time's-up notification by itself at the end.
+            reset()
         } else if left != remaining {
             remaining = left
         }

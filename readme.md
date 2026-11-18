@@ -7,7 +7,9 @@
 - Counts down from 5, 25, or 45 minutes
 - Counts down until the next :29 or :59
 - Add extra 5 minutes to timer when running
-- Optionally displays OS notification with/without sound after countdown is done
+- Optionally displays OS notification with/without sound (Funk) after countdown is done
+- The notification has one button: start a 5 min break after work, 25 min work after a break, or add 5 minutes after the others
+- Shows when the running timer ends in the menu
 - When running, shows only the countdown (like `13:03`) and no icon
 - Works with dark/light color scheme
 
@@ -37,8 +39,6 @@ Run the tests with `xcodebuild test -scheme MenubarTimer -destination 'platform=
 ## Todo
 
 - [ ] Sound can be turned off during an eval talk, and the setting goes back to what it was once that timer is done
-- [ ] Buttons on the time's-up notification: +5 min, and start 5 min break
-- [ ] End time in the menu while a timer runs
 - [ ] A pie in the menu bar instead of, or next to, the countdown
 - [ ] Focus (Do Not Disturb) during an eval talk, through a Shortcut
 - [ ] Pause and resume

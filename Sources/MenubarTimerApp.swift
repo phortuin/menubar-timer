@@ -1,19 +1,4 @@
 import SwiftUI
-import UserNotifications
-
-struct Preset: Identifiable {
-    let title: String
-    let seconds: Int
-    let message: String
-
-    var id: String { title }
-
-    static let all = [
-        Preset(title: "Start 5 min break", seconds: 5 * 60, message: "Back to work you fucking slacker"),
-        Preset(title: "Start 25 min work", seconds: 25 * 60, message: "Slow it down motherfucker"),
-        Preset(title: "Start eval talk", seconds: 45 * 60, message: "Wrap it up!"),
-    ]
-}
 
 @main
 struct MenubarTimerApp: App {
@@ -28,32 +13,28 @@ struct MenubarTimerApp: App {
         return formatter
     }()
 
-    init() {
-        UserDefaults.standard.register(defaults: [Setting.notifications: true, Setting.sound: true])
-        UNUserNotificationCenter.current().delegate = Notifier.shared
-    }
-
     var body: some Scene {
         MenuBarExtra {
             Group {
                 ForEach(Preset.all) { preset in
-                    Button(preset.title) {
-                        countdown.start(seconds: preset.seconds, message: preset.message)
-                    }
+                    Button(preset.title) { countdown.start(preset) }
                 }
                 Button("Start timer until \(Self.clock.string(from: countdown.until))") {
                     // The menu item may show a moment that has just passed.
-                    countdown.start(until: nextUntil(after: .now), message: "Yep, it’s that fucking late already")
+                    countdown.start(until: nextUntil(after: .now), message: "Yep, it’s that fucking late already", next: nil)
                 }
             }
             .disabled(countdown.isRunning)
             Button("Add 5 mins to timer") { countdown.addFive() }
                 .disabled(!countdown.isRunning)
             Divider()
-            Toggle("Allow notifications", isOn: $allowNotifications)
-            Toggle("Allow sound", isOn: $allowSound)
+            Toggle("Allow notifications", isOn: setting($allowNotifications))
+            Toggle("Allow sound", isOn: setting($allowSound))
                 .disabled(!allowNotifications)
             Divider()
+            if let end = countdown.end {
+                Text("Ends at \(Self.clock.string(from: end))")
+            }
             Button("Stop & clear timer") { countdown.stop() }
                 .disabled(!countdown.isRunning)
             Divider()
@@ -71,5 +52,14 @@ struct MenubarTimerApp: App {
                 Image(systemName: "timer")
             }
         }
+    }
+
+    /// The setting's binding, telling the countdown about each change so the
+    /// time's-up notification it has scheduled follows the new setting.
+    private func setting(_ value: Binding<Bool>) -> Binding<Bool> {
+        Binding(get: { value.wrappedValue }, set: {
+            value.wrappedValue = $0
+            countdown.settingsChanged()
+        })
     }
 }
