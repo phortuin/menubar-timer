@@ -1,0 +1,56 @@
+# Generate the Xcode project with:  brew install xcodegen && xcodegen
+name: MenubarTimer
+options:
+  bundleIdPrefix: com.phortuin
+  deploymentTarget:
+    macOS: "27.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    # Semver: minor for features, patch for fixes. The build number is the git
+    # commit count, stamped by scripts/build-number.sh (see postBuildScripts).
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  MenubarTimer:
+    type: application
+    platform: macOS
+    sources:
+      - Sources
+      - Assets.xcassets
+    scheme:
+      testTargets: [MenubarTimerTests]
+    postBuildScripts:
+      - name: Build number from git
+        # The processed Info.plist as input orders this after Xcode writes it
+        # (otherwise it may write CURRENT_PROJECT_VERSION back over the stamp).
+        inputFiles: ["$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)"]
+        basedOnDependencyAnalysis: false
+        script: '"$SRCROOT/scripts/build-number.sh"'
+    settings:
+      base:
+        PRODUCT_NAME: MenubarTimer
+        PRODUCT_BUNDLE_IDENTIFIER: com.phortuin.menubartimer
+        # Signed to run locally: no Apple ID needed on this Mac.
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        ENABLE_HARDENED_RUNTIME: NO
+        GENERATE_INFOPLIST_FILE: YES
+        # Menu bar only: no Dock icon, no app menu.
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # The build-number script reads .git, outside any declared input.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+  MenubarTimerTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+    dependencies:
+      - target: MenubarTimer
+    settings:
+      base:
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        GENERATE_INFOPLIST_FILE: YES

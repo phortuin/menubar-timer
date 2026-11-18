@@ -1,4 +1,8 @@
-dist/
+.DS_Store
+xcuserdata/
+DerivedData/
+*.xcodeproj/
+.build/
+.swiftpm/
+*.zip
 build/
-env/
-.eggs
