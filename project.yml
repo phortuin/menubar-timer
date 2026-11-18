@@ -9,7 +9,7 @@ settings:
     SWIFT_VERSION: "6.0"
     # Semver: minor for features, patch for fixes. The build number is the git
     # commit count, stamped by scripts/build-number.sh (see postBuildScripts).
-    MARKETING_VERSION: "1.2.0"
+    MARKETING_VERSION: "1.2.1"
     CURRENT_PROJECT_VERSION: "1"
 targets:
   MenubarTimer:
