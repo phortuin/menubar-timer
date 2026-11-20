@@ -7,16 +7,16 @@ on rumps; that version lives in the git history.
 
 ## Vocabulary
 
-- **Progress bar**: the time left and an outlined bar in the menu bar while
-  a timer runs. The bar is as long as the timer: 20 points for 5 minutes,
-  for every timer, up to 120 points for 30 minutes or more. It is never
-  shorter than 5 minutes: a shorter until timer starts partly gone. Its
-  fill has two parts on that same scale: the time left, solid, and right
-  of it the time gone, half transparent, so the bar is never empty. A
-  timer longer than 30 minutes stays all solid until 30 are left. The
-  solid part gets shorter every second, and its last pixel fades rather
-  than going at once. Add five makes the bar and the solid part 5 minutes
-  longer. When nothing runs, the menu bar shows the timer icon instead.
+- **Progress bar**: the time left and an outlined bar in the menu bar while a
+  timer runs. The bar is as long as the timer: 20 points for 5 minutes, for
+  every timer, up to 120 points for 30 minutes or more. It is never shorter
+  than 5 minutes: a shorter until timer starts partly gone. Its fill has two
+  parts on that same scale: the time left, solid, and right of it the time
+  gone, faint, so the bar is never empty. A timer longer than 30 minutes
+  stays all solid until 30 are left. The solid part gets shorter every
+  second, and its last pixel fades rather than going at once. Add five makes
+  the bar and the solid part 5 minutes longer. When nothing runs, the menu
+  bar shows the timer icon instead.
 - **Preset timers**: 5 min break (to wander, but not for too long), 30 min
   meeting, 60 min meeting, at the top of the menu while no timer runs. The break
   says "Back to work you fucking slacker", both meetings "Wrap it up!".

@@ -2,10 +2,10 @@ import AppKit
 
 /// The menu bar image of a running timer: the time left, then an outlined bar
 /// as long as the timer's `length` in seconds, filled solid from the left for
-/// the `seconds` left and half transparent for the rest, the time gone. The
-/// bar and its solid part are as wide as `barWidth` makes them, so a width
-/// means the same time for every timer. A template image, so it follows the
-/// menu bar's light or dark look.
+/// the `seconds` left and faint for the rest, the time gone. The bar and its
+/// solid part are as wide as `barWidth` makes them, so a width means the same
+/// time for every timer. A template image, so it follows the menu bar's light
+/// or dark look.
 func progressBar(time: String, left seconds: Int, of length: Int) -> NSImage {
     let font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.menuBarFont(ofSize: 0).pointSize, weight: .regular)
     let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
