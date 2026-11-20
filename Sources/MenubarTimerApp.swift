@@ -36,7 +36,7 @@ struct MenubarTimerApp: App {
                 .keyboardShortcut("q")
         } label: {
             if countdown.isRunning {
-                Image(nsImage: progressBar(time: formatCountdown(countdown.remaining), left: countdown.shareLeft))
+                Image(nsImage: progressBar(time: formatCountdown(countdown.remaining), left: countdown.remaining, of: countdown.length, waiting: countdown.waiting, solidity: countdown.solidity))
                     .accessibilityLabel("\(formatCountdown(countdown.remaining)) left")
             } else {
                 Image(systemName: "timer")

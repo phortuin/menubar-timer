@@ -1,9 +1,14 @@
 import AppKit
 
 /// The menu bar image of a running timer: the time left, then an outlined bar
-/// filled from the left for the share of time left. A template image, so it
-/// follows the menu bar's light or dark look.
-func progressBar(time: String, left share: Double) -> NSImage {
+/// as long as the timer's `length` in seconds, filled from the left for the
+/// `seconds` left. Both are as wide as `barWidth` makes them, so a bar's
+/// width means the same time for every timer. The fill has two parts: on the
+/// left, half transparent, the `waiting` seconds of added time, and right of
+/// them the time counting down, which is solid for a `solidity` of 1 and as
+/// transparent as the waiting part for 0. A template image, so it follows the
+/// menu bar's light or dark look.
+func progressBar(time: String, left seconds: Int, of length: Int, waiting: Int, solidity: Double) -> NSImage {
     let font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.menuBarFont(ofSize: 0).pointSize, weight: .regular)
     let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
     let text = NSAttributedString(string: time, attributes: attributes)
@@ -13,12 +18,15 @@ func progressBar(time: String, left share: Double) -> NSImage {
     // minutes or more, after several Add 5 minutes, gets more room.
     let fourDigits = ceil(NSAttributedString(string: "00:00", attributes: attributes).size().width)
     let textWidth = max(fourDigits, ceil(text.size().width))
-    // Whole points, so the outline and the fill land on pixel edges on any
-    // display and the gap around the fill is the same on every side.
-    let bar = NSSize(width: 36, height: 14)
+    // Whole points, so the outline lands on pixel edges on any display.
     let line: CGFloat = 1
     let gap: CGFloat = 2
     let spacing: CGFloat = 4
+    // The inside is as wide as the timer is long, in whole points, but never
+    // shorter than 5 minutes: the bar of a shorter timer starts partly empty,
+    // because a bar narrower than it is high no longer reads as a bar. Around
+    // the inside come the gap and the outline.
+    let bar = NSSize(width: ceil(barWidth(max(length, 5 * 60))) + 2 * (line + gap), height: 14)
     let size = NSSize(width: textWidth + spacing + bar.width, height: bar.height)
     let image = NSImage(size: size, flipped: false) { bounds in
         // The digits' middle, half their height above the baseline, on the
@@ -33,10 +41,18 @@ func progressBar(time: String, left share: Double) -> NSImage {
         border.stroke()
         let track = frame.insetBy(dx: line + gap, dy: line + gap)
         NSBezierPath(roundedRect: track, xRadius: track.height / 2, yRadius: track.height / 2).addClip()
-        // A straight edge on the right, so where the fill ends is easy to read.
-        var fill = track
-        fill.size.width = (track.width * min(max(share, 0), 1)).rounded()
-        fill.fill()
+        // Straight edges on the right, so where each part ends is easy to read.
+        let waitingOpacity = 0.5
+        let widths = fillWidths(left: seconds, waiting: waiting)
+        var extra = track
+        extra.size.width = widths.waiting
+        NSColor.black.withAlphaComponent(waitingOpacity).set()
+        extra.fill()
+        var rest = track
+        rest.origin.x = extra.maxX
+        rest.size.width = widths.solid
+        NSColor.black.withAlphaComponent(waitingOpacity + (1 - waitingOpacity) * solidity).set()
+        rest.fill()
         return true
     }
     image.isTemplate = true

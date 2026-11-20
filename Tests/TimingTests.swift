@@ -29,12 +29,50 @@ struct TimingTests {
         #expect(nextUntil(after: time(12, 59, 30), calendar: calendar) == time(13, 29))
     }
 
-    @Test func aFiveMinuteTimerStartsAtFiveMinutesAndFull() {
+    @Test func aFiveMinuteTimerStartsAtFiveMinutes() {
         let now = Date(timeIntervalSinceReferenceDate: 1000.4)
-        let span = timerSpan(from: now, to: now.addingTimeInterval(5 * 60))
-        let left = secondsLeft(until: span.end, at: now)
-        #expect(left == 300)
-        #expect(shareLeft(left, of: span) == 1)
+        let end = wholeSecond(now.addingTimeInterval(5 * 60))
+        #expect(secondsLeft(until: end, at: now) == 300)
+    }
+
+    @Test func fiveMinutesAreTwentyPointsOnTheBar() {
+        #expect(barWidth(5 * 60) == 20)
+        #expect(barWidth(10 * 60) == 40)
+        #expect(barWidth(30 * 60) == 120)
+    }
+
+    @Test func aSecondIsAFifteenthOfAPointOnTheBar() {
+        #expect(barWidth(15) == 1)
+        #expect(barWidth(3) == 0.2)
+        #expect(barWidth(4 * 60 + 54) == 19.6)
+        #expect(barWidth(0) == 0)
+    }
+
+    @Test func theBarIsNoWiderThanThirtyMinutes() {
+        #expect(barWidth(29 * 60 + 45) == 119)
+        #expect(barWidth(30 * 60 + 1) == 120)
+        #expect(barWidth(60 * 60) == 120)
+    }
+
+    @Test func theFillIsWaitingTimeThenTheTimeCountingDown() {
+        let widths = fillWidths(left: 12 * 60, waiting: 10 * 60)
+        #expect(widths.waiting == 40)
+        #expect(widths.solid == 8)
+    }
+
+    @Test func aFillWithoutWaitingTimeIsAllSolid() {
+        let widths = fillWidths(left: 5 * 60, waiting: 0)
+        #expect(widths.waiting == 0)
+        #expect(widths.solid == 20)
+    }
+
+    @Test func inAFullBarTheSolidPartKeepsItsWidth() {
+        let sixAddFives = fillWidths(left: 35 * 60, waiting: 30 * 60)
+        #expect(sixAddFives.waiting == 100)
+        #expect(sixAddFives.solid == 20)
+        let longMeeting = fillWidths(left: 65 * 60, waiting: 5 * 60)
+        #expect(longMeeting.waiting == 0)
+        #expect(longMeeting.solid == 120)
     }
 
     @Test func countdownFormat() {
