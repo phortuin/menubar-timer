@@ -39,7 +39,7 @@ func progressBar(time: String, left seconds: Int, of length: Int) -> NSImage {
         border.stroke()
         let track = frame.insetBy(dx: line + gap, dy: line + gap)
         NSBezierPath(roundedRect: track, xRadius: track.height / 2, yRadius: track.height / 2).addClip()
-        NSColor.black.withAlphaComponent(0.5).set()
+        NSColor.black.withAlphaComponent(0.3).set()
         track.fill()
         // A straight edge on the right, so where the time left ends is easy
         // to read.
