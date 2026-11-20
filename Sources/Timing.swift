@@ -29,16 +29,6 @@ func barWidth(_ seconds: Int) -> Double {
     min(Double(seconds * fullBarPoints) / Double(fullBarSeconds), Double(fullBarPoints))
 }
 
-/// The widths in points of the two parts of the progress bar's fill, with
-/// `seconds` left of which the last `waiting` are added time that has not
-/// begun. Together they are as wide as `seconds`. When that is more than a
-/// full bar, the solid part, the time counting down, keeps its width and the
-/// waiting part gets the room that is left.
-func fillWidths(left seconds: Int, waiting: Int) -> (waiting: Double, solid: Double) {
-    let solid = barWidth(seconds - waiting)
-    return (barWidth(seconds) - solid, solid)
-}
-
 /// The whole seconds left until `end`, counting a started second as a whole
 /// one, so the countdown shows 0:00 only when time is up.
 func secondsLeft(until end: Date, at date: Date) -> Int {

@@ -54,27 +54,6 @@ struct TimingTests {
         #expect(barWidth(60 * 60) == 120)
     }
 
-    @Test func theFillIsWaitingTimeThenTheTimeCountingDown() {
-        let widths = fillWidths(left: 12 * 60, waiting: 10 * 60)
-        #expect(widths.waiting == 40)
-        #expect(widths.solid == 8)
-    }
-
-    @Test func aFillWithoutWaitingTimeIsAllSolid() {
-        let widths = fillWidths(left: 5 * 60, waiting: 0)
-        #expect(widths.waiting == 0)
-        #expect(widths.solid == 20)
-    }
-
-    @Test func inAFullBarTheSolidPartKeepsItsWidth() {
-        let sixAddFives = fillWidths(left: 35 * 60, waiting: 30 * 60)
-        #expect(sixAddFives.waiting == 100)
-        #expect(sixAddFives.solid == 20)
-        let longMeeting = fillWidths(left: 65 * 60, waiting: 5 * 60)
-        #expect(longMeeting.waiting == 0)
-        #expect(longMeeting.solid == 120)
-    }
-
     @Test func countdownFormat() {
         #expect(formatCountdown(45 * 60) == "45:00")
         #expect(formatCountdown(9 * 60 + 5) == "9:05")

@@ -1,14 +1,12 @@
 import AppKit
 
 /// The menu bar image of a running timer: the time left, then an outlined bar
-/// as long as the timer's `length` in seconds, filled from the left for the
-/// `seconds` left. Both are as wide as `barWidth` makes them, so a bar's
-/// width means the same time for every timer. The fill has two parts: on the
-/// left, half transparent, the `waiting` seconds of added time, and right of
-/// them the time counting down, which is solid for a `solidity` of 1 and as
-/// transparent as the waiting part for 0. A template image, so it follows the
+/// as long as the timer's `length` in seconds, filled solid from the left for
+/// the `seconds` left and half transparent for the rest, the time gone. The
+/// bar and its solid part are as wide as `barWidth` makes them, so a width
+/// means the same time for every timer. A template image, so it follows the
 /// menu bar's light or dark look.
-func progressBar(time: String, left seconds: Int, of length: Int, waiting: Int, solidity: Double) -> NSImage {
+func progressBar(time: String, left seconds: Int, of length: Int) -> NSImage {
     let font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.menuBarFont(ofSize: 0).pointSize, weight: .regular)
     let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
     let text = NSAttributedString(string: time, attributes: attributes)
@@ -23,7 +21,7 @@ func progressBar(time: String, left seconds: Int, of length: Int, waiting: Int, 
     let gap: CGFloat = 2
     let spacing: CGFloat = 4
     // The inside is as wide as the timer is long, in whole points, but never
-    // shorter than 5 minutes: the bar of a shorter timer starts partly empty,
+    // shorter than 5 minutes: the bar of a shorter timer starts partly gone,
     // because a bar narrower than it is high no longer reads as a bar. Around
     // the inside come the gap and the outline.
     let bar = NSSize(width: ceil(barWidth(max(length, 5 * 60))) + 2 * (line + gap), height: 14)
@@ -41,18 +39,14 @@ func progressBar(time: String, left seconds: Int, of length: Int, waiting: Int, 
         border.stroke()
         let track = frame.insetBy(dx: line + gap, dy: line + gap)
         NSBezierPath(roundedRect: track, xRadius: track.height / 2, yRadius: track.height / 2).addClip()
-        // Straight edges on the right, so where each part ends is easy to read.
-        let waitingOpacity = 0.5
-        let widths = fillWidths(left: seconds, waiting: waiting)
-        var extra = track
-        extra.size.width = widths.waiting
-        NSColor.black.withAlphaComponent(waitingOpacity).set()
-        extra.fill()
-        var rest = track
-        rest.origin.x = extra.maxX
-        rest.size.width = widths.solid
-        NSColor.black.withAlphaComponent(waitingOpacity + (1 - waitingOpacity) * solidity).set()
-        rest.fill()
+        NSColor.black.withAlphaComponent(0.5).set()
+        track.fill()
+        // A straight edge on the right, so where the time left ends is easy
+        // to read.
+        var fill = track
+        fill.size.width = barWidth(seconds)
+        NSColor.black.set()
+        fill.fill()
         return true
     }
     image.isTemplate = true

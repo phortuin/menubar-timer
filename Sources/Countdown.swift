@@ -9,17 +9,10 @@ final class Countdown {
     private(set) var remaining = 0
     /// The seconds the running timer lasts in all, add fives included.
     private(set) var length = 0
-    /// The seconds at the end of the timer that add fives added and that are
-    /// waiting: they begin when everything before them has run out.
-    private(set) var waiting = 0
-    /// How far the part of the timer counting down has turned solid, from 0
-    /// to 1: it is 1 except in the second after waiting time has begun.
-    private(set) var solidity = 1.0
     private(set) var until = nextUntil(after: .now)
     @ObservationIgnored private var message = ""
     @ObservationIgnored private let notifier = Notifier()
     @ObservationIgnored private var ticker: Timer!
-    @ObservationIgnored private var fader: Timer?
 
     var isRunning: Bool { end != nil }
 
@@ -74,7 +67,6 @@ final class Countdown {
         let later = end.addingTimeInterval(5 * 60)
         self.end = later
         length += 5 * 60
-        waiting += 5 * 60
         notifier.schedule(at: later, message: message)
         tick()
     }
@@ -86,9 +78,6 @@ final class Countdown {
 
     private func reset() {
         end = nil
-        waiting = 0
-        stopFader()
-        solidity = 1
         // With no timer running, the only change to show is the until time.
         ticker.fireDate = until
     }
@@ -105,33 +94,8 @@ final class Countdown {
         if left <= 0 {
             // macOS shows the time's-up notification by itself at the end.
             reset()
-            return
+        } else if left != remaining {
+            remaining = left
         }
-        if left != remaining { remaining = left }
-        if waiting > 0, left <= waiting {
-            waiting = 0
-            turnSolid()
-        }
-    }
-
-    private func stopFader() {
-        fader?.invalidate()
-        fader = nil
-    }
-
-    /// Takes `solidity` from 0 to 1 over a second.
-    private func turnSolid() {
-        let began = Date.now
-        solidity = 0
-        stopFader()
-        let fader = Timer(timeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                self.solidity = min(Date.now.timeIntervalSince(began), 1)
-                if self.solidity == 1 { self.stopFader() }
-            }
-        }
-        RunLoop.main.add(fader, forMode: .common)
-        self.fader = fader
     }
 }
