@@ -27,6 +27,16 @@ final class Countdown {
         NotificationCenter.default.addObserver(forName: .NSSystemTimeZoneDidChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.until = nextUntil(after: .now) }
         }
+        // The ticker counts the time the Mac is awake, so a sleep or a change
+        // of the clock leaves it out of step with the clock: a Mac that sleeps
+        // from 11:00 to 12:18 would still offer Until 11:29, and a running
+        // countdown would change a fraction of a second late from then on.
+        NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.catchUp() }
+        }
+        NotificationCenter.default.addObserver(forName: .NSSystemClockDidChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.catchUp() }
+        }
         // A time's up scheduled with macOS would still come after the app quit.
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.notifier.cancel() }
@@ -55,10 +65,19 @@ final class Countdown {
         length = secondsLeft(until: end, at: .now)
         self.message = message
         notifier.schedule(at: end, message: message)
-        // Ticks on the whole seconds before the end, so the countdown changes
-        // and the timer finishes on time rather than up to a second late.
+        alignTicker(to: end)
+        tick()
+    }
+
+    /// Ticks the ticker on the whole seconds before `end`, so the countdown
+    /// changes and the timer finishes on time rather than up to a second late.
+    private func alignTicker(to end: Date) {
         let left = end.timeIntervalSinceNow
         ticker.fireDate = .now.addingTimeInterval(left - left.rounded(.down))
+    }
+
+    private func catchUp() {
+        if let end { alignTicker(to: end) }
         tick()
     }
 
